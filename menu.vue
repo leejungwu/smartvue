@@ -1,89 +1,80 @@
 <template>
   <div>
-    <div>{{turn}}님의 턴입니다.</div>
-    <table-component>
-      <tr v-for="(rowData, rowIndex) in tableData" :key="rowIndex">
-        <td @click="onClickTd(rowIndex, cellIndex)" v-for="(cellData, cellIndex) in rowData" :key="cellIndex">{{cellData}}</td>
-      </tr>
-    </table-component>
-    <div v-if="winner">{{winner}}님의 승리!</div>
+    <v-app>
+    <v-container fluid>
+      <v-row no-gutters>
+        <v-col cols="3">
+          <v-row>
+            <v-col cols="6">
+              <h4>{{ contents.id? contents.id[7]: 1}}번 문제</h4>
+            </v-col>
+            <v-col cols="6">
+              <div class="text-center">
+                <v-menu offset-y>
+                  <template v-slot:activator="{ on, attrs }">
+                    <v-btn
+                      color="primary"
+                      dark
+                      v-bind="attrs"
+                      v-on="on"
+                    >
+                      D
+                    </v-btn>
+                  </template>
+                  <v-list>
+                    <v-list-item
+                      v-for="(item, index) in posts"
+                      :key="index"
+                    >
+                      <v-list-item-title><button @click="onClickMenu(item.id)" :style="[item.id === contents.id ? {backgroundColor: '#FFFF00'}: {backgroundColor: '#FFFFFF'}]">
+                        {{ item.id[7] }}번</button>
+                      </v-list-item-title>
+                    </v-list-item>
+                  </v-list>
+                </v-menu>
+              </div>
+            </v-col>
+          </v-row>
+          <br/>
+          <div v-for="post in posts" v-bind:key="post.id">
+            <button @click="onClickMenu(post.id)" :style="[post.id === contents.id ? {backgroundColor: '#FFFF00'}: {backgroundColor: '#FFFFFF'}]">
+              {{ post.title[3] }}번 문제
+            </button>
+          </div>
+        </v-col>
+        <v-col cols="9">
+          <div id="app" :style="{ backgroundColor: '#F5F5F5'}">
+            <p v-html="contents.content"></p> 
+          </div>
+        </v-col>
+      </v-row>
+    </v-container>
+    </v-app>
   </div>
 </template>
-
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
 <script>
-  // [0, 1, 2, 3, 4 ,12, 7, 8, 9, 10, 13, 156]
-  //  0  1  2  3  4  5    6  7  8  9  10, 11,  12
   import { mapState } from 'vuex';
-  import store, { CHANGE_TURN, CLICK_CELL, NO_WINNER, RESET_GAME, SET_WINNER } from './store';
-  import TableComponent from './TableComponent';
+  import store from './store';
   export default {
     store,
     components: {
-      TableComponent,
-    },
-    data() {
-      return {
-        data: 1,
-      }
+
     },
     computed: {
-      ...mapState(['winner', 'turn', 'tableData']),
-      // winner() {
-      //   return this.$store.state.winner;
-      // },
-      // turn() {
-      //   return this.$store.state.turn;
-      // },
+      ...mapState(['posts','contents']),
     },
     methods: {
-      onClickTd(rowIndex, cellIndex) {
-        if (this.cellData) return;
-        this.$store.commit(CLICK_CELL, { row: rowIndex, cell: cellIndex });
-        let win = false;
-        if (this.tableData[rowIndex][0] === this.turn && this.tableData[rowIndex][1] === this.turn && this.tableData[rowIndex][2] === this.turn) {
-          win = true;
-        }
-        if (this.tableData[0][cellIndex] === this.turn && this.tableData[1][cellIndex] === this.turn && this.tableData[2][cellIndex] === this.turn) {
-          win = true;
-        }
-        if (this.tableData[0][0] === this.turn && this.tableData[1][1] === this.turn && this.tableData[2][2] === this.turn) {
-          win = true;
-        }
-        if (this.tableData[0][2] === this.turn && this.tableData[1][1] === this.turn && this.tableData[2][0] === this.turn) {
-          win = true;
-        }
-        if (win) { // 이긴 경우: 3줄 달성
-          this.$store.commit(SET_WINNER, this.turn);
-          this.$store.commit(RESET_GAME);
-        } else { // 무승부
-          let all = true; // all이 true면 무승부라는 뜻
-          this.tableData.forEach((row) => { // 무승부 검사
-            row.forEach((cell) => {
-              if (!cell) {
-                all = false;
-              }
-            });
-          });
-          if (all) { // 무승부
-            this.$store.commit(NO_WINNER);
-            this.$store.commit(RESET_GAME);
-          } else {
-            this.$store.commit(CHANGE_TURN);
-          }
-        }
+      onClickMenu(id) {
+        this.$store.dispatch('loadContent',{id:id});
       }
+    },
+    mounted() {
+      this.$store.dispatch('loadData');
     }
   };
 </script>
 
 <style>
-  table {
-    border-collapse: collapse;
-  }
-  td {
-    border: 1px solid black;
-    width: 40px;
-    height: 40px;
-    text-align: center;
-  }
+
 </style>
